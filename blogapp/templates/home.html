@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="text-3xl mb-6">Published Posts</h1>
+
+<ul>
+    {% for post in posts %}
+        <li class="bg-white p-4 mb-4 rounded shadow">
+            <h2 class="text-xl font-bold">{{ post.title }}</h2>
+            <p>{{ post.content|truncatewords:20 }}</p>
+            <p class="text-gray-600">Author: {{ post.author.name }}</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'edit_post' post.pk %}" class="text-blue-500 mr-2">Edit</a>
+                <a href="{% url 'delete_post' post.pk %}" class="text-red-500">Delete</a>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li>No posts yet.</li>
+    {% endfor %}
+</ul>
+
+<!-- Pagination -->
+<div class="mt-4">
+    {% if posts.has_previous %}
+        <a href="?page={{ posts.previous_page_number }}" class="mr-2 text-blue-500">Previous</a>
+    {% endif %}
+    <span>Page {{ posts.number }} of {{ posts.paginator.num_pages }}</span>
+    {% if posts.has_next %}
+        <a href="?page={{ posts.next_page_number }}" class="ml-2 text-blue-500">Next</a>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto mt-10 bg-white shadow-md rounded-lg p-8">
+    <h2 class="text-3xl font-bold mb-6 text-gray-800 text-center">Create / Edit Post</h2>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <div>
+            <label class="block text-gray-700 font-semibold mb-2" for="id_title">Title</label>
+            {{ form.title|add_class:"w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+        </div>
+
+        <div>
+            <label class="block text-gray-700 font-semibold mb-2" for="id_content">Content</label>
+            {{ form.content|add_class:"w-full px-4 py-2 border rounded-lg h-48 focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+        </div>
+
+        <div>
+            <label class="block text-gray-700 font-semibold mb-2" for="id_author">Author</label>
+            {{ form.author|add_class:"w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <label class="inline-flex items-center">
+                {{ form.published }}
+                <span class="ml-2 text-gray-700 font-medium">Published?</span>
+            </label>
+        </div>
+
+        <div class="text-center">
+            <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-lg transition">
+                Save Post
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
