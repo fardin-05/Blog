@@ -13,9 +13,14 @@
 
         <form method="post" class="space-y-4">
             {% csrf_token %}
+            <p>
+            Admin User Name(Requred)
             {{ form.username|add_class:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
+            </p>
+            <p>
+            Admin Password    
             {{ form.password|add_class:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
-
+            </p>
             <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded transition duration-200">
                 Login
             </button>
