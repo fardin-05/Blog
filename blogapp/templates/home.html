@@ -1,33 +1,254 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1 class="text-3xl mb-6">Published Posts</h1>
+<style>
+    /* 1. Global Setup */
+    body {
+        background-color: #020617; 
+        overflow-x: hidden;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
 
-<ul>
-    {% for post in posts %}
-        <li class="bg-white p-4 mb-4 rounded shadow">
-            <h2 class="text-xl font-bold">{{ post.title }}</h2>
-            <p>{{ post.content|truncatewords:20 }}</p>
-            <p class="text-gray-600">Author: {{ post.author.name }}</p>
-            {% if user.is_authenticated %}
-                <a href="{% url 'edit_post' post.pk %}" class="text-blue-500 mr-2">Edit</a>
-                <a href="{% url 'delete_post' post.pk %}" class="text-red-500">Delete</a>
-            {% endif %}
-        </li>
-    {% empty %}
-        <li>No posts yet.</li>
-    {% endfor %}
-</ul>
+    /* 2. RAIN & OCEAN (Lower Z-Index to let footer be on top) */
+    .rain-container {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+    }
 
-<!-- Pagination -->
-<div class="mt-4">
-    {% if posts.has_previous %}
-        <a href="?page={{ posts.previous_page_number }}" class="mr-2 text-blue-500">Previous</a>
-    {% endif %}
-    <span>Page {{ posts.number }} of {{ posts.paginator.num_pages }}</span>
-    {% if posts.has_next %}
-        <a href="?page={{ posts.next_page_number }}" class="ml-2 text-blue-500">Next</a>
-    {% endif %}
+    .drop {
+        position: absolute;
+        background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(99, 102, 241, 0.5));
+        width: 1.5px;
+        height: 80px;
+        top: -100px;
+        animation: fall linear infinite;
+    }
+
+    .ocean { 
+        height: 150px;
+        width: 100%;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        background: linear-gradient(to top, #012a36, #015871); 
+        z-index: 10;
+    }
+
+    .wave {
+        background: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/85486/wave.svg') repeat-x; 
+        position: absolute;
+        top: -198px;
+        width: 6400px;
+        height: 198px;
+        animation: wave 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+        opacity: 0.4;
+    }
+
+    @keyframes fall {
+        0% { transform: translateY(-100px); }
+        100% { transform: translateY(110vh); }
+    }
+
+    @keyframes wave {
+        0% { margin-left: 0; }
+        100% { margin-left: -1600px; }
+    }
+
+    /* 3. NEON GLOWING CARDS & SIDEBAR */
+    .main-wrapper {
+        flex: 1 0 auto;
+        padding-bottom: 250px;
+        position: relative;
+        z-index: 20;
+    }
+
+    .blog-card, .sidebar-widget {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 2rem;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.05);
+    }
+
+    .blog-card:hover, .sidebar-widget:hover {
+        border: 1px solid rgba(99, 102, 241, 0.6);
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        transform: translateY(-5px);
+    }
+
+    .neon-title {
+        color: #fff;
+        text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+    }
+
+    /* 4. SIDEBAR SPECIFIC */
+    .sidebar-widget {
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .neon-input {
+        background: rgba(2, 6, 23, 0.5);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 12px;
+        width: 100%;
+        transition: all 0.3s;
+    }
+
+    .neon-input:focus {
+        outline: none;
+        border-color: #818cf8;
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .category-link {
+        display: block;
+        padding: 8px 0;
+        color: #94a3b8;
+        transition: all 0.3s;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .category-link:hover {
+        color: #818cf8;
+        padding-left: 10px;
+        text-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+    }
+
+    /* 5. GLOWING BUTTON */
+    .neon-btn {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(99, 102, 241, 0.4);
+        padding: 10px 20px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .neon-btn:hover {
+        background: rgba(99, 102, 241, 0.1);
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+    }
+
+    /* 6. BASE FOOTER FORCE VISIBLE */
+    footer, .footer {
+        position: relative !important;
+        z-index: 100 !important;
+        background-color: #020617 !important;
+        margin-top: -100px;
+        border-top: 1px solid rgba(99, 102, 241, 0.2) !important;
+    }
+</style>
+
+<div class="rain-container" id="rain-box"></div>
+<div class="ocean"><div class="wave"></div></div>
+
+<div class="main-wrapper">
+    <div class="max-w-7xl mx-auto px-4 py-20">
+        <div class="mb-24 text-center">
+            <h2 class="text-7xl md:text-9xl font-black text-white italic tracking-tighter mb-4" 
+                style="text-shadow: 0 0 50px rgba(99, 102, 241, 0.6);">
+                Blue<span class="text-indigo-500">Verse</span>
+            </h2>
+            <div class="h-1 w-32 bg-indigo-500 mx-auto rounded-full blur-[2px] animate-pulse"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div class="lg:col-span-8 space-y-12">
+                {% for post in posts %}
+                <article class="blog-card p-10 md:p-14 group">
+                    <h3 class="text-4xl md:text-5xl font-black neon-title mb-6">
+                        {{ post.title }}
+                    </h3>
+
+                    <div class="text-slate-400 text-lg leading-relaxed content-wrapper">
+                        <div class="short-text opacity-80">
+                            {{ post.content|striptags|truncatechars:180 }}
+                        </div>
+                        
+                        <div class="full-content text-slate-200" style="display:none;">
+                            {{ post.content|linebreaks }}
+                        </div>
+
+                        <button onclick="smartToggle(this)" 
+                                class="neon-btn mt-10 flex items-center space-x-3 text-indigo-400 font-black text-sm uppercase tracking-widest">
+                            <span class="btn-label">Read Chapter ↓</span>
+                            <div class="w-2 h-2 bg-indigo-500 rounded-full animate-ping"></div>
+                        </button>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+
+            <div class="lg:col-span-4 space-y-8">
+                
+                <div class="sidebar-widget">
+                    <h4 class="text-white font-bold mb-4 uppercase tracking-widest text-sm">Search the Deep</h4>
+                    <div class="relative">
+                        <input type="text" placeholder="Looking for stories?..." class="neon-input">
+                    </div>
+                </div>
+
+                <div class="sidebar-widget">
+                    <h4 class="text-white font-bold mb-6 uppercase tracking-widest text-sm">Vessel Routes</h4>
+                    <div class="space-y-2">
+                        <a href="#" class="category-link">Abyssal Chronicles (12)</a>
+                        <a href="#" class="category-link">Neon Reefs (08)</a>
+                        <a href="#" class="category-link">Surface Echoes (05)</a>
+                        <a href="#" class="category-link">Lost Navigations (03)</a>
+                    </div>
+                </div>
+
+                <div class="sidebar-widget bg-gradient-to-br from-indigo-950/40 to-transparent">
+                    <h4 class="text-white font-bold mb-4 uppercase tracking-widest text-sm">Join the Crew</h4>
+                    <p class="text-slate-400 text-sm mb-6">Get weekly Abyssal stories delivered to your ship.</p>
+                    <input type="email" placeholder="Email coordinates..." class="neon-input mb-4">
+                    <button class="w-full neon-btn text-white text-xs font-bold uppercase tracking-widest">
+                        Dispatch Signal
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
 
+<script>
+    function smartToggle(btn) {
+        const container = btn.closest('.content-wrapper');
+        const shortText = container.querySelector('.short-text');
+        const fullContent = container.querySelector('.full-content');
+        const label = btn.querySelector('.btn-label');
+
+        if (fullContent.style.display === "none") {
+            fullContent.style.display = "block";
+            shortText.style.display = "none";
+            label.innerText = "Show Less ↑";
+            btn.style.boxShadow = "0 0 20px rgba(99, 102, 241, 0.7)";
+        } else {
+            fullContent.style.display = "none";
+            shortText.style.display = "block";
+            label.innerText = "Read Chapter ↓";
+            btn.style.boxShadow = "none";
+        }
+    }
+
+    const rainBox = document.getElementById('rain-box');
+    for (let i = 0; i < 60; i++) {
+        const drop = document.createElement('div');
+        drop.classList.add('drop');
+        drop.style.left = Math.random() * 100 + 'vw';
+        drop.style.animationDuration = (Math.random() * 1 + 1.2) + 's'; 
+        drop.style.opacity = Math.random();
+        rainBox.appendChild(drop);
+    }
+</script>
 {% endblock %}

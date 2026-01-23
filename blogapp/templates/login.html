@@ -2,32 +2,164 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="flex items-center justify-center min-h-screen bg-gray-100">
-    <div class="bg-white shadow-lg rounded-lg w-full max-w-md p-8">
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Login to Your Account</h2>
+<style>
+    /* 1. Global Setup (Match with Home) */
+    body {
+        background-color: #020617; 
+        overflow: hidden; /* Login page e scroll lagbe na */
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    /* 2. RAIN & OCEAN ANIMATION */
+    .rain-container {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        pointer-events: none;
+    }
+
+    .drop {
+        position: absolute;
+        background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(99, 102, 241, 0.5));
+        width: 1.5px;
+        height: 80px;
+        top: -100px;
+        animation: fall linear infinite;
+    }
+
+    .ocean { 
+        height: 150px;
+        width: 100%;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        background: linear-gradient(to top, #012a36, #015871); 
+        z-index: 10;
+    }
+
+    .wave {
+        background: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/85486/wave.svg') repeat-x; 
+        position: absolute;
+        top: -198px;
+        width: 6400px;
+        height: 198px;
+        animation: wave 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+        opacity: 0.3;
+    }
+
+    @keyframes fall {
+        0% { transform: translateY(-100px); }
+        100% { transform: translateY(110vh); }
+    }
+
+    @keyframes wave {
+        0% { margin-left: 0; }
+        100% { margin-left: -1600px; }
+    }
+
+    /* 3. NEON LOGIN CARD (Glassmorphism) */
+    .login-card {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 2.5rem;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.1);
+        z-index: 20;
+        position: relative;
+    }
+
+    .neon-input {
+        background: rgba(2, 6, 23, 0.6) !important;
+        border: 1px solid rgba(99, 102, 241, 0.2) !important;
+        color: white !important;
+        transition: all 0.3s ease;
+    }
+
+    .neon-input:focus {
+        border-color: #818cf8 !important;
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.5) !important;
+        outline: none;
+    }
+
+    .neon-btn {
+        background: transparent;
+        border: 1px solid rgba(99, 102, 241, 0.6);
+        color: #818cf8;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .neon-btn:hover {
+        background: rgba(99, 102, 241, 0.1);
+        box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
+
+    .neon-text-shadow {
+        text-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+    }
+</style>
+
+<div class="rain-container" id="rain-box"></div>
+<div class="ocean"><div class="wave"></div></div>
+
+<div class="flex items-center justify-center min-h-screen relative z-20 px-4">
+    <div class="login-card w-full max-w-md p-10">
+        <div class="mb-8 text-center">
+            <h2 class="text-4xl font-black text-white italic tracking-tighter neon-text-shadow">
+                Admin<span class="text-indigo-400">Login.</span>
+            </h2>
+            <p class="text-indigo-300/40 text-[10px] uppercase tracking-widest mt-2 font-bold">Abyssal Navigation Only</p>
+        </div>
 
         {% if form.errors %}
-            <p class="text-red-500 mb-4 text-center">Invalid credentials, please try again.</p>
-            <p> only admin can login</p>
+            <div class="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg text-sm mb-6 text-center animate-pulse">
+                Invalid credentials. Restricted to Admin.
+            </div>
         {% endif %}
 
-        <form method="post" class="space-y-4">
+        <form method="post" class="space-y-6">
             {% csrf_token %}
-            <p>
-            Admin User Name(Required)
-            {{ form.username|add_class:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
-            </p>
-            <p>
-            Admin Password    
-            {{ form.password|add_class:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" }}
-            </p>
-            <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded transition duration-200">
-                Login
+            
+            <div>
+                <label class="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2 ml-1">Username</label>
+                {{ form.username|add_class:"neon-input w-full rounded-xl px-4 py-3 focus:ring-0" }}
+            </div>
+
+            <div>
+                <label class="block text-slate-400 text-xs font-bold uppercase tracking-widest mb-2 ml-1">Password</label>
+                {{ form.password|add_class:"neon-input w-full rounded-xl px-4 py-3 focus:ring-0" }}
+            </div>
+
+            <button type="submit" class="neon-btn w-full py-4 rounded-xl mt-4">
+                Enter the Depth
             </button>
         </form>
-         <div class="mt-6">
-        <a href="{% url 'home' %}" class="text-blue-500 hover:underline">Back to Home</a>
-    </div>
+
+        <div class="mt-8 text-center">
+            <a href="{% url 'home' %}" class="text-slate-500 hover:text-indigo-400 text-sm font-bold transition-colors duration-300 flex items-center justify-center space-x-2">
+                <span>← Back to Surface</span>
+            </a>
+        </div>
     </div>
 </div>
+
+<script>
+    // Rain Logic (Match with Home)
+    const rainBox = document.getElementById('rain-box');
+    for (let i = 0; i < 40; i++) {
+        const drop = document.createElement('div');
+        drop.classList.add('drop');
+        drop.style.left = Math.random() * 100 + 'vw';
+        drop.style.animationDuration = (Math.random() * 1 + 1.2) + 's'; 
+        rainBox.appendChild(drop);
+    }
+</script>
 {% endblock %}
